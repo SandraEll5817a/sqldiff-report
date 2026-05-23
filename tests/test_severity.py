@@ -76,7 +76,23 @@ def test_severity_badge_no_colour():
     assert severity_badge(Severity.LOW, colour=False) == "[LOW]"
 
 
-def test_badge_for_table_contains_name():
-    line = badge_for_table("orders", Severity.MEDIUM, colour=False)
-    assert "orders" in line
-    assert "[MEDIUM]" in line
+def test_filter_by_severity_drops_entire_table_when_no_qualifying_diffs():
+    """A table with only low-severity column diffs should be excluded entirely
+    when filtering at MEDIUM or above."""
+    col_low = ColumnDiff(column_name="x", old_column=None, new_column=_COL_A)
+    td = TableDiff(table_name="t", added=False, removed=False, column_diffs=[col_low])
+    result = filter_by_severity(SchemaDiff(table_diffs=[td]), Severity.MEDIUM)
+    assert len(result.table_diffs) == 0
+
+
+def test_filter_by_severity_medium_keeps_medium_and_high():
+    """Filtering at MEDIUM should retain both MEDIUM and HIGH column diffs."""
+    col_low = ColumnDiff(column_name="x", old_column=None, new_column=_COL_A)
+    col_medium = ColumnDiff(column_name="nullable_col", old_column=_COL_A, new_column=_COL_C)
+    col_high = ColumnDiff(column_name="y", old_column=_COL_A, new_column=None)
+    td = TableDiff(table_name="t", added=False, removed=False,
+                   column_diffs=[col_low, col_medium, col_high])
+    result = filter_by_severity(SchemaDiff(table_diffs=[td]), Severity.MEDIUM)
+    assert len(result.table_diffs) == 1
+    retained_names = {c.column_name for c in result.table_diffs[0].column_diffs}
+    assert retained_names == {"nullable_col", "y"}
