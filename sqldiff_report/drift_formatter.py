@@ -23,6 +23,17 @@ def _severity_label(sev: Severity, colour: bool = True) -> str:
 
 
 def format_drift_text(report: DriftReport, colour: bool = True) -> str:
+    """Return a human-readable, optionally colourised summary of *report*.
+
+    Args:
+        report: The :class:`DriftReport` produced by the drift detector.
+        colour: When ``True`` (default), ANSI colour codes are embedded in the
+            output so severity labels are highlighted in a terminal.  Pass
+            ``False`` when writing to a file or a non-TTY stream.
+
+    Returns:
+        A multi-line string suitable for printing to stdout.
+    """
     lines: List[str] = []
     baseline_info = f" (baseline: {report.baseline_label})" if report.baseline_label else ""
     lines.append(f"=== Schema Drift Report{baseline_info} ===")
@@ -43,6 +54,17 @@ def format_drift_text(report: DriftReport, colour: bool = True) -> str:
 
 
 def format_drift_dict(report: DriftReport) -> Dict[str, Any]:
+    """Serialise *report* to a plain dictionary suitable for JSON output.
+
+    Returns:
+        A dictionary with the following keys:
+
+        * ``baseline_label`` – the label of the baseline schema, or ``None``.
+        * ``has_drift`` – ``True`` when at least one drift item was detected.
+        * ``max_severity`` – the highest severity value string, or ``None``.
+        * ``drifted_tables`` – list of dicts, each containing ``table``,
+          ``description``, and ``severity``.
+    """
     return {
         "baseline_label": report.baseline_label,
         "has_drift": report.has_drift,
