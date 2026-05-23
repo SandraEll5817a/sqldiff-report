@@ -33,6 +33,12 @@ def _nullable_score(old: ColumnDiff, new: ColumnDiff) -> float:
 
 
 def _confidence(removed: ColumnDiff, added: ColumnDiff) -> float:
+    """Compute a weighted confidence score for a potential rename pair.
+
+    Weights:
+        - 0.7 for type similarity (exact match > base-type match > no match)
+        - 0.3 for nullable flag agreement
+    """
     type_w = 0.7
     null_w = 0.3
     return round(
@@ -49,6 +55,16 @@ def detect_renames(
 
     Only columns that are purely added or purely removed (not type-changed)
     are considered.  Pairs are matched greedily by descending confidence.
+
+    Args:
+        table_diff: A :class:`TableDiff` whose ``column_diffs`` will be
+            inspected for rename candidates.
+        threshold: Minimum confidence score (inclusive) for a pair to be
+            included in the results.  Defaults to ``0.5``.
+
+    Returns:
+        A list of :class:`RenameCandidate` instances ordered by descending
+        confidence.  Each removed/added column appears at most once.
     """
     removed = [
         cd for cd in table_diff.column_diffs if cd.kind == "removed"
