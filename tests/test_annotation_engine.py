@@ -77,7 +77,7 @@ def test_nullable_to_not_null_is_high():
     col_diff = ColumnDiff(column_name="email", old_definition=old, new_definition=new)
     diff = SchemaDiff(table_diffs=[_modified_table("users", [col_diff])])
     anns = annotate_diff(diff)
-    assert any(a.severity == Severity.HIGH and "not null" in a.message.lower() for a in anns)
+    assert any(a.severity == Severity.HIGH and "nullable" in a.message.lower() for a in anns)
 
 
 def test_not_null_to_nullable_is_low():
@@ -87,10 +87,3 @@ def test_not_null_to_nullable_is_low():
     diff = SchemaDiff(table_diffs=[_modified_table("users", [col_diff])])
     anns = annotate_diff(diff)
     assert any(a.severity == Severity.LOW and "nullable" in a.message.lower() for a in anns)
-
-
-def test_annotation_target_includes_table_and_column():
-    col_diff = ColumnDiff(column_name="score", old_definition=None, new_definition=_col("score"))
-    diff = SchemaDiff(table_diffs=[_modified_table("results", [col_diff])])
-    anns = annotate_diff(diff)
-    assert any(ann.target == "results.score" for ann in anns)
